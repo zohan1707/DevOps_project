@@ -1,0 +1,41 @@
+pipeline {
+    agent any
+
+    stages {
+        stage ('Checkout'){
+          steps {
+              echo 'Start Checkout'
+              cleanWs()
+              git branch: 'main', credentialsId: 'github_access', url: 'https://github.com/zohan1707/DevOps_project.git'
+              echo 'Checkout Finished'
+          }
+         }
+         
+
+        stage('build') {
+          steps {
+                echo 'Build Start'
+                bat"""
+                rem git clone https://github.com/zohan1707/DevOps_project.git
+                mvn package
+                """
+                echo 'Build Finished'
+               }
+          }
+          
+          
+          
+   stage ('Upload artifact to s3'){
+            steps{
+              withCredentials([[$class:'AmazonWebServicesCredentialsBinding', accessKeyVariable:'AWS_ACCESS_KEY_ID',credentialsId:'jenkins_s3_access', secretKeyVariable:'AWS_SECRET_ACCESS_KEY']]) {
+                bat"""
+                aws s3 cp target/spring-petclinic-3.2.0-SNAPSHOT.jar s3://kravets
+                """
+              }
+            }
+        }
+        
+    }
+    
+
+}
